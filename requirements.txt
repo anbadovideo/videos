@@ -1,3 +1,4 @@
 click==3.3
 flask==0.10.1
 gunicorn==19.3.0
+youtube_dl
