@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
 import traceback
+
 from flask import Flask, jsonify, request
 from youtube_dl import YoutubeDL, gen_extractors, DownloadError
 from youtube_dl.version import __version__ as youtube_dl_version
 from youtube_dl.utils import ExtractorError
+from .parser import PARSERS
 
 
 app = Flask(__name__)
@@ -16,18 +18,18 @@ class VideosDL(YoutubeDL):
         self.add_default_info_extractors()
 
 
-def clean_result(result):
+def build_result(result):
     r_type = result.get('_type', 'video')
-    videos = []
+    media = []
     if r_type == 'video':
-        videos = [result]
+        media = [PARSERS[result['extractor_key'].lower()].parse(result)]
     elif r_type == 'playlist':
         for entry in result['entries']:
-            videos.extend(clean_result(entry))
+            media.extend(build_result(entry))
     elif r_type == 'compat_list':
         for r in result['entries']:
-            videos.extend(clean_result(r))
-    return videos
+            media.extend(build_result(r))
+    return media
 
 
 @app.route('/extractors')
@@ -52,7 +54,7 @@ def get_media():
         with VideosDL(dl_params) as dl:
             result = dl.extract_info(url, download=False)
 
-        return jsonify(videos=clean_result(result))
+        return jsonify(media=build_result(result))
     except (DownloadError, ExtractorError) as e:
         logging.error(traceback.format_exc())
         return jsonify(error_code=500, message='Download failed', exception=e, dl_version=youtube_dl_version), 500
