@@ -9,10 +9,10 @@ class MediaParser(object):
 
     def parse(self, obj):
         return {
-            'title': obj['title'],
-            'thumbnail': obj['thumbnail'],
-            'description': obj['description'],
-            'reference': obj['webpage_url']
+            'title': obj.get('title', ''),
+            'thumbnail': obj.get('thumbnail', ''),
+            'description': obj.get('description', ''),
+            'reference': obj.get('webpage_url', '')
         }
 
 
