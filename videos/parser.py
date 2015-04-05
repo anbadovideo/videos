@@ -81,10 +81,16 @@ class YoutubeVideoParser(MediaParser):
 class SoundCloudAudioParser(MediaParser):
     @staticmethod
     def is_valid_format(fmt):
-        return fmt.get('ext', None) == 'mp3' and fmt['format_id'] == 'http_mp3_128_url'
+        return fmt.get('ext', None) == 'mp3' and fmt.get('url', '').startswith('http')
 
     def parse(self, obj):
-        return super().parse(obj)
+        candidates = filter(SoundCloudAudioParser.is_valid_format, obj.get('formats', []))
+        fmts = {fmt['format_id']: fmt['url'] for fmt in candidates}
+        return dict(super().parse(obj), **{
+            'type': 'audio',
+            'provider': 'soundcloud',
+            'formats': fmts
+        })
 
     def is_valid_video(self, obj):
         return obj.get('extractor_key', '').lower() == 'soundcloud'
