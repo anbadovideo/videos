@@ -10,6 +10,7 @@ from .parser import PARSERS
 
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
 
 
 class VideosDL(YoutubeDL):
