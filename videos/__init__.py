@@ -48,14 +48,20 @@ def get_media():
 
     dl_params = {
         'cachedir': False,
+        'source_address': request.remote_addr,
         'logger': app.logger.getChild('youtube-dl')
     }
 
     try:
         with VideosDL(dl_params) as dl:
             result = dl.extract_info(url, download=False)
-
         return jsonify(media=build_result(result))
     except (DownloadError, ExtractorError) as e:
-        logging.error(traceback.format_exc())
-        return jsonify(error_code=500, message='Download failed', exception=e, dl_version=youtube_dl_version), 500
+        try:
+            del dl_params['source_address']
+            with VideosDL(dl_params) as dl:
+                result = dl.extract_info(url, download=False)
+            return jsonify(media=build_result(result))
+        except (DownloadError, ExtractorError) as e:
+            logging.error(traceback.format_exc())
+            return jsonify(error_code=500, message='Download failed', exception=e, dl_version=youtube_dl_version), 500
