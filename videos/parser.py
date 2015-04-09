@@ -8,10 +8,15 @@ class MediaParser(object):
         raise NotImplementedError('VideoParser.is_valid_video() must be implemented!')
 
     def parse(self, obj):
+        duration = obj.get('duration', -1)
+        if duration is None:
+            duration = -1
+
         return {
             'title': obj.get('title', ''),
             'thumbnail': obj.get('thumbnail', ''),
             'description': obj.get('description', ''),
+            'duration': duration,
             'reference': obj.get('webpage_url', '')
         }
 
