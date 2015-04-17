@@ -7,6 +7,7 @@ from youtube_dl import YoutubeDL, gen_extractors, DownloadError
 from youtube_dl.version import __version__ as youtube_dl_version
 from youtube_dl.utils import ExtractorError
 from .parser import PARSERS
+from videos.util import crossdomain
 
 
 app = Flask(__name__)
@@ -34,12 +35,14 @@ def build_result(result):
 
 
 @app.route('/extractors')
+@crossdomain(origin='*')
 def get_extractors():
     extractors = [dict(name=ie.IE_NAME, working=ie.working()) for ie in gen_extractors()]
     return jsonify(extractors=extractors, dl_version=youtube_dl_version)
 
 
 @app.route('/media')
+@crossdomain(origin='*')
 def get_media():
     url = request.args.get('url', None)
     if not url:
