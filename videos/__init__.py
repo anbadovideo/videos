@@ -7,12 +7,14 @@ from flask import Flask, jsonify, request
 from youtube_dl import YoutubeDL, gen_extractors, DownloadError
 from youtube_dl.version import __version__ as youtube_dl_version
 from youtube_dl.utils import ExtractorError
+from werkzeug.contrib.fixers import ProxyFix
 
 from .parser import PARSERS
 from videos.util import crossdomain
 
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app)
 app.config['JSON_AS_ASCII'] = False
 
 root_logger = logging.getLogger()
