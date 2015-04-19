@@ -1,17 +1,29 @@
 # -*- coding: utf-8 -*-
 import logging
 import traceback
+import sys
 
 from flask import Flask, jsonify, request
 from youtube_dl import YoutubeDL, gen_extractors, DownloadError
 from youtube_dl.version import __version__ as youtube_dl_version
 from youtube_dl.utils import ExtractorError
+
 from .parser import PARSERS
 from videos.util import crossdomain
 
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
+
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+
+log_handler = logging.StreamHandler(sys.stdout)
+log_handler.setLevel(logging.INFO)
+log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+log_handler.setFormatter(log_formatter)
+
+root_logger.addHandler(log_handler)
 
 
 class VideosDL(YoutubeDL):
@@ -60,6 +72,7 @@ def get_media():
             result = dl.extract_info(url, download=False)
         return jsonify(media=build_result(result))
     except (DownloadError, ExtractorError) as e:
+        logging.error('DownloadError, Client IP: %s, Exception: %s', request.remote_addr, e)
         try:
             del dl_params['source_address']
             with VideosDL(dl_params) as dl:
@@ -67,4 +80,4 @@ def get_media():
             return jsonify(media=build_result(result))
         except (DownloadError, ExtractorError) as e:
             logging.error(traceback.format_exc())
-            return jsonify(error_code=500, message='Download failed', exception=e, dl_version=youtube_dl_version), 500
+            return jsonify(error_code=500, message='Download failed', dl_version=youtube_dl_version), 500
